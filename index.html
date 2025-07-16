@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📸 Photo Diary App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons for UI elements -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .photo-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease-in-out;
+        }
+        .photo-card:hover {
+            transform: translateY(-5px);
+        }
+        .photo-card img {
+            width: 100%;
+            height: 200px; /* Fixed height for consistency */
+            object-fit: cover;
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+        }
+        .photo-card-content {
+            padding: 1rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .photo-card-caption {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937; /* Darker text */
+        }
+        .photo-card-tags {
+            font-size: 0.875rem;
+            color: #4b5563; /* Gray text */
+            margin-bottom: 0.5rem;
+        }
+        .photo-card-date-mood {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            color: #6b7280; /* Lighter gray text */
+            margin-top: 0.5rem;
+        }
+        .emoji-picker {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+            gap: 0.25rem;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.5rem; /* rounded-md */
+            background-color: #ffffff;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .emoji-picker button {
+            font-size: 1.25rem;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .emoji-picker button:hover {
+            background-color: #e5e7eb; /* gray-100 */
+        }
+        .emoji-picker button.selected {
+            background-color: #d1fae5; /* green-100 */
+            border: 1px solid #34d399; /* green-400 */
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .input-group input[type="text"],
+        .input-group textarea,
+        .input-group input[type="file"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            color: #374151;
+            background-color: #f9fafb;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .input-group input[type="text"]:focus,
+        .input-group textarea:focus,
+        .input-group input[type="file"]:focus {
+            outline: none;
+            border-color: #2563eb; /* blue-600 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* blue-300 with opacity */
+        }
+        .btn-primary {
+            background-color: #2563eb; /* blue-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8; /* blue-700 */
+        }
+        .btn-secondary {
+            background-color: #6b7280; /* gray-500 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563; /* gray-600 */
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <div class="container flex-grow">
+        <!-- Header -->
+        <header class="text-center py-8">
+            <h1 class="text-4xl font-bold text-gray-800 flex items-center justify-center gap-2">
+                <i data-lucide="camera"></i> Photo Diary App
+            </h1>
+            <p class="text-gray-600 mt-2">Snap, caption, tag, and remember your moments!</p>
+        </header>
+
+        <!-- Add Photo Section -->
+        <section class="bg-white p-6 rounded-xl shadow-md mb-8">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700 flex items-center gap-2">
+                <i data-lucide="plus-circle"></i> Add New Photo Entry
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="input-group">
+                    <label for="photoInput">Upload Photo</label>
+                    <input type="file" id="photoInput" accept="image/*" capture="camera" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                    <p class="text-xs text-gray-500 mt-1">Supports camera capture on mobile devices.</p>
+                </div>
+                <div class="input-group">
+                    <label for="captionInput">Caption</label>
+                    <textarea id="captionInput" rows="3" placeholder="What's happening in this photo?" class="resize-none"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="tagsInput">Tags (comma-separated)</label>
+                    <input type="text" id="tagsInput" placeholder="e.g., nature, travel, friends">
+                </div>
+                <div class="input-group">
+                    <label for="moodInput">Mood/Emotion</label>
+                    <div id="moodInput" class="flex flex-wrap gap-2 emoji-picker">
+                        <!-- Emojis will be dynamically loaded here -->
+                    </div>
+                </div>
+            </div>
+            <button id="addPhotoBtn" class="mt-6 w-full btn-primary flex items-center justify-center gap-2">
+                <i data-lucide="image-plus"></i> Add Photo to Diary
+            </button>
+        </section>
+
+        <!-- Search and Filter Section -->
+        <section class="bg-white p-6 rounded-xl shadow-md mb-8">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700 flex items-center gap-2">
+                <i data-lucide="search"></i> Search & Filter Photos
+            </h2>
+            <div class="input-group">
+                <label for="searchInput">Search by Caption, Tags, or Date</label>
+                <input type="text" id="searchInput" placeholder="e.g., beach, 2023-10-26, happy">
+            </div>
+        </section>
+
+        <!-- Photo Gallery Section -->
+        <section class="pb-8">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700 flex items-center gap-2">
+                <i data-lucide="gallery-vertical"></i> Your Photo Gallery
+            </h2>
+            <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Photo cards will be dynamically loaded here -->
+            </div>
+            <p id="noPhotosMessage" class="text-center text-gray-500 mt-8 hidden">No photos yet. Add some memories!</p>
+            <p id="noSearchResultsMessage" class="text-center text-gray-500 mt-8 hidden">No photos match your search criteria.</p>
+        </section>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeModalBtn">&times;</span>
+            <h3 class="text-xl font-semibold mb-4">Confirm Deletion</h3>
+            <p class="mb-6">Are you sure you want to delete this photo entry? This action cannot be undone.</p>
+            <div class="flex justify-end gap-4">
+                <button id="cancelDeleteBtn" class="btn-secondary">Cancel</button>
+                <button id="confirmDeleteBtn" class="btn-primary bg-red-600 hover:bg-red-700">Delete</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        const photoInput = document.getElementById('photoInput');
+        const captionInput = document.getElementById('captionInput');
+        const tagsInput = document.getElementById('tagsInput');
+        const moodInput = document.getElementById('moodInput');
+        const addPhotoBtn = document.getElementById('addPhotoBtn');
+        const searchInput = document.getElementById('searchInput');
+        const galleryGrid = document.getElementById('galleryGrid');
+        const noPhotosMessage = document.getElementById('noPhotosMessage');
+        const noSearchResultsMessage = document.getElementById('noSearchResultsMessage');
+
+        const deleteModal = document.getElementById('deleteModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        let photos = []; // Array to store photo objects
+        let selectedMood = ''; // To store the currently selected emoji
+
+        // Predefined list of emojis for mood selection
+        const emojis = [
+            '😊', '😃', '😂', '😍', '😎', '😴', '😔', '😢', '😠', '🥳',
+            '🤔', '🤩', '🥰', '😇', '🥴', '🤯', '🥳', '🤓', '🤫', '🤗'
+        ];
+
+        // Function to load photos from localStorage
+        function loadPhotos() {
+            const storedPhotos = localStorage.getItem('photoDiary');
+            if (storedPhotos) {
+                photos = JSON.parse(storedPhotos);
+            }
+            renderGallery();
+        }
+
+        // Function to save photos to localStorage
+        function savePhotos() {
+            localStorage.setItem('photoDiary', JSON.stringify(photos));
+        }
+
+        // Function to render the emoji picker
+        function renderEmojiPicker() {
+            moodInput.innerHTML = ''; // Clear previous emojis
+            emojis.forEach(emoji => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = emoji;
+                button.classList.add('rounded-md', 'hover:bg-gray-100', 'transition-colors');
+                if (emoji === selectedMood) {
+                    button.classList.add('selected');
+                }
+                button.addEventListener('click', () => {
+                    selectedMood = emoji;
+                    // Remove 'selected' class from all buttons
+                    moodInput.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+                    // Add 'selected' class to the clicked button
+                    button.classList.add('selected');
+                });
+                moodInput.appendChild(button);
+            });
+        }
+
+        // Function to render the gallery
+        function renderGallery(filteredPhotos = photos) {
+            galleryGrid.innerHTML = ''; // Clear existing photos
+
+            if (photos.length === 0) {
+                noPhotosMessage.classList.remove('hidden');
+                noSearchResultsMessage.classList.add('hidden');
+                return;
+            } else {
+                noPhotosMessage.classList.add('hidden');
+            }
+
+            if (filteredPhotos.length === 0) {
+                noSearchResultsMessage.classList.remove('hidden');
+            } else {
+                noSearchResultsMessage.classList.add('hidden');
+            }
+
+            filteredPhotos.forEach(photo => {
+                const photoCard = document.createElement('div');
+                photoCard.classList.add('photo-card');
+                photoCard.dataset.id = photo.id; // Store ID for easy access
+
+                photoCard.innerHTML = `
+                    <img src="${photo.imageUrl}" alt="${photo.caption || 'Photo'}">
+                    <div class="photo-card-content">
+                        <div>
+                            <p class="photo-card-caption">${photo.caption || 'No Caption'}</p>
+                            <p class="photo-card-tags">Tags: ${photo.tags.join(', ') || 'None'}</p>
+                        </div>
+                        <div class="photo-card-date-mood">
+                            <span>${photo.date}</span>
+                            <span>${photo.mood || ''}</span>
+                        </div>
+                        <button class="delete-btn mt-4 w-full btn-secondary flex items-center justify-center gap-2">
+                            <i data-lucide="trash-2"></i> Delete
+                        </button>
+                    </div>
+                `;
+                galleryGrid.appendChild(photoCard);
+            });
+
+            // Re-create Lucide icons for newly added elements
+            lucide.createIcons();
+
+            // Add event listeners for delete buttons
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const photoId = event.target.closest('.photo-card').dataset.id;
+                    showDeleteModal(photoId);
+                });
+            });
+        }
+
+        // Function to show delete confirmation modal
+        function showDeleteModal(photoId) {
+            deleteModal.style.display = 'flex'; // Use flex to center
+            confirmDeleteBtn.dataset.photoId = photoId; // Store ID on confirm button
+        }
+
+        // Function to hide delete confirmation modal
+        function hideDeleteModal() {
+            deleteModal.style.display = 'none';
+            confirmDeleteBtn.removeAttribute('data-photo-id');
+        }
+
+        // Event listener for adding a photo
+        addPhotoBtn.addEventListener('click', () => {
+            const file = photoInput.files[0];
+            const caption = captionInput.value.trim();
+            const tags = tagsInput.value.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+            const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD format
+
+            if (!file) {
+                alert('Please select a photo to add.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const newPhoto = {
+                    id: Date.now().toString(), // Unique ID based on timestamp
+                    imageUrl: e.target.result, // Base64 image data
+                    caption: caption,
+                    tags: tags,
+                    date: date,
+                    mood: selectedMood
+                };
+                photos.unshift(newPhoto); // Add to the beginning
+                savePhotos();
+                renderGallery();
+
+                // Clear form fields
+                photoInput.value = '';
+                captionInput.value = '';
+                tagsInput.value = '';
+                selectedMood = ''; // Reset selected mood
+                renderEmojiPicker(); // Re-render emoji picker to clear selection
+            };
+            reader.readAsDataURL(file); // Convert image to Base64
+        });
+
+        // Event listener for search input
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredPhotos = photos.filter(photo => {
+                const matchesCaption = photo.caption.toLowerCase().includes(searchTerm);
+                const matchesTags = photo.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                const matchesDate = photo.date.includes(searchTerm); // Direct match for date for simplicity
+                return matchesCaption || matchesTags || matchesDate;
+            });
+            renderGallery(filteredPhotos);
+        });
+
+        // Event listeners for modal buttons
+        closeModalBtn.addEventListener('click', hideDeleteModal);
+        cancelDeleteBtn.addEventListener('click', hideDeleteModal);
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            const photoIdToDelete = confirmDeleteBtn.dataset.photoId;
+            photos = photos.filter(photo => photo.id !== photoIdToDelete);
+            savePhotos();
+            renderGallery();
+            hideDeleteModal();
+        });
+
+        // Close modal if user clicks outside of it
+        window.addEventListener('click', (event) => {
+            if (event.target === deleteModal) {
+                hideDeleteModal();
+            }
+        });
+
+        // Initial load
+        window.onload = () => {
+            renderEmojiPicker();
+            loadPhotos();
+        };
+    </script>
+</body>
+</html>
